@@ -1,9 +1,34 @@
+/*
+ * Copyright (C) 2021 TheTHINGYEEEEE
+ *
+ *     This program is free software: you can redistribute it and/or modify
+ *     it under the terms of the GNU General Public License as published by
+ *     the Free Software Foundation, either version 3 of the License, or
+ *     (at your option) any later version.
+ *
+ *     This program is distributed in the hope that it will be useful,
+ *     but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *     GNU General Public License for more details.
+ *
+ *     You should have received a copy of the GNU General Public License
+ *     along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
+
 package com.github.thethingyee.stuffybot;
 
+import com.github.thethingyee.stuffybot.libraries.ColorThief;
+import com.github.thethingyee.stuffybot.listeners.*;
 import com.sedmelluq.discord.lavaplayer.player.AudioLoadResultHandler;
 import com.sedmelluq.discord.lavaplayer.player.AudioPlayerManager;
 import com.sedmelluq.discord.lavaplayer.player.DefaultAudioPlayerManager;
 import com.sedmelluq.discord.lavaplayer.source.AudioSourceManagers;
+import com.sedmelluq.discord.lavaplayer.source.bandcamp.BandcampAudioSourceManager;
+import com.sedmelluq.discord.lavaplayer.source.http.HttpAudioSourceManager;
+import com.sedmelluq.discord.lavaplayer.source.local.LocalAudioSourceManager;
+import com.sedmelluq.discord.lavaplayer.source.twitch.TwitchStreamAudioSourceManager;
+import com.sedmelluq.discord.lavaplayer.source.vimeo.VimeoAudioSourceManager;
+import com.sedmelluq.discord.lavaplayer.source.youtube.YoutubeAudioSourceManager;
 import com.sedmelluq.discord.lavaplayer.tools.FriendlyException;
 import com.sedmelluq.discord.lavaplayer.track.AudioPlaylist;
 import com.sedmelluq.discord.lavaplayer.track.AudioTrack;
@@ -11,56 +36,154 @@ import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.JDABuilder;
 import net.dv8tion.jda.api.entities.*;
-import net.dv8tion.jda.api.events.ReadyEvent;
-import net.dv8tion.jda.api.events.message.guild.GuildMessageReceivedEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
 import net.dv8tion.jda.api.managers.AudioManager;
-import org.jetbrains.annotations.NotNull;
-import org.json.JSONArray;
-import org.json.JSONObject;
-import org.json.JSONTokener;
-import org.jsoup.Jsoup;
-import org.jsoup.nodes.Document;
 
+import javax.imageio.ImageIO;
+import java.awt.*;
+import java.awt.image.BufferedImage;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.net.URL;
+import java.util.*;
+import java.util.logging.ConsoleHandler;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import static net.dv8tion.jda.api.requests.GatewayIntent.GUILD_MESSAGES;
-import static net.dv8tion.jda.api.requests.GatewayIntent.GUILD_VOICE_STATES;
-
-
 public class StuffyBot extends ListenerAdapter {
 
+    // DECLARATIONS
+
+    // Public JDA Object
     public static JDA jda;
 
-    public static HashMap<Guild, TextChannel> botChannel = new HashMap<>();
+    // Also considered as Music Channels on the Guild itself.
+    public static HashMap<Guild, ArrayList<TextChannel>> botChannels = new HashMap<>();
+
+    // Don't need to mind this.
+    // It is just the current status index of the bot.
+    private static int currentStatus = 0;
+
+    // To call the bot.
+    public static final String prefix = ",";
+
+    // Version of the bot.
+    public String version = "v2.6.1";
+
+    // Name of the bot without any discriminators.
+    public String botName;
 
     public static void main(String[] args) throws Exception {
 
-        jda = JDABuilder.create("", GUILD_MESSAGES, GUILD_VOICE_STATES)
-                .addEventListeners(new StuffyBot())
-                .setActivity(Activity.watching("TheTHINGYEEEEE#1859 suffer"))
-                .build();
+        // Call in one single main class instance.
+        // To use it in all classes who needs the main class instance.
+        StuffyBot stuffyBot = new StuffyBot();
+
+        // Deletes the method logger and date logger.
+        ConsoleHandler handler = new ConsoleHandler();
+        handler.setFormatter(new DumbFormatter());
+        for (int asd = 0; asd < logger.getHandlers().length; asd++) {
+            logger.removeHandler(logger.getHandlers()[asd]);
+        }
+        logger.setUseParentHandlers(false);
+        logger.addHandler(handler);
+
+        // Update mode to tell if the bot is updating..
+        boolean updateMode = true;
+
+        // Array of statuses that will be cycling through the bot's status.
+        Activity[] statuses = {
+                Activity.competing("Stuffy with other bots."),
+                Activity.playing("on version " + stuffyBot.getVersion()),
+                Activity.watching(prefix + "help"),
+                Activity.watching("ThingyTV suffer from coding me."),
+                Activity.listening("the CPU fan."),
+                Activity.playing("on Singapore's servers!"),
+                Activity.watching("YouTube for search results."),
+                Activity.watching("BandCamp for AMAZING music tracks!"),
+                Activity.watching("audio from Twitch Streams!"),
+                Activity.watching("Vimeo to play music :O")
+        };
+
+        // TOKEN MUST BE PRIVATE!!!
+        String token;
+
+        // If update mode is on, activate the beta bot, not the main bot.
+        // If update mode is off, activate the main bot, not the beta bot.
+        token = "[redacted]";
+        if (updateMode) {
+            logger.info("Update mode is on!");
+        } else {
+            logger.info("Update mode is off.");
+        }
+
+        // Starting up the bot..
+        logger.info("Starting up...");
+
+//        jda = JDABuilder.create(token, GUILD_MESSAGES, GUILD_VOICE_STATES, GUILD_MESSAGE_REACTIONS)
+//                .setStatus(OnlineStatus.ONLINE)
+//                .disableCache(CacheFlag.ACTIVITY, CacheFlag.EMOTE, CacheFlag.CLIENT_STATUS)
+//                .build();
+
+        // Activate the bot which has the token.
+        jda = JDABuilder.createDefault(token).build();
+
+        // Register listeners.
+        logger.info("Loading listeners...");
+        jda.addEventListener(new AddReaction(stuffyBot));
+        jda.addEventListener(stuffyBot);
+        jda.addEventListener(new CommandsAdded(stuffyBot));
+        jda.addEventListener(new BotReady(stuffyBot));
+        jda.addEventListener(new GuildVoice(stuffyBot));
+        jda.addEventListener(new AdditionalCommands(stuffyBot));
+
+
+        // Loads additional features to the bot that aren't that necessary.
+        logger.info("Loading additional features...");
+        if (!updateMode) {
+            new Timer().schedule(new TimerTask() {
+                public void run() {
+                    jda.getPresence().setActivity(statuses[currentStatus]);
+                    currentStatus = (currentStatus + 1) % statuses.length;
+                }
+            }, 0, 20 * 1000);
+        } else {
+            jda.getPresence().setActivity(Activity.competing("programming for updates."));
+        }
+
+        // Loads the command line for command line commands.
+        logger.info("Loading command line...");
+        Scanner scanner = new Scanner(System.in);
+        while (true) {
+            String scanned = scanner.nextLine();
+            if (scanned.equalsIgnoreCase("stop")) {
+                logger.info("Ending all process...");
+                System.exit(69);
+            }
+        }
     }
 
     private final AudioPlayerManager playerManager;
     private final Map<Long, GuildMusicManager> musicManagers;
+    public final ArrayList<TextChannel> channels = new ArrayList<>();
+
     public static Logger logger = Logger.getLogger(StuffyBot.class.getName());
 
     public StuffyBot() {
         this.musicManagers = new HashMap<>();
 
         this.playerManager = new DefaultAudioPlayerManager();
+        playerManager.registerSourceManager(new YoutubeAudioSourceManager());
+        playerManager.registerSourceManager(new BandcampAudioSourceManager());
+        playerManager.registerSourceManager(new VimeoAudioSourceManager());
+        playerManager.registerSourceManager(new TwitchStreamAudioSourceManager());
+        playerManager.registerSourceManager(new HttpAudioSourceManager());
+        playerManager.registerSourceManager(new LocalAudioSourceManager());
+
         AudioSourceManagers.registerRemoteSources(playerManager);
         AudioSourceManagers.registerLocalSource(playerManager);
     }
 
-    private synchronized GuildMusicManager getGuildAudioPlayer(Guild guild) {
+    public synchronized GuildMusicManager getGuildAudioPlayer(Guild guild) {
         long guildId = Long.parseLong(guild.getId());
         GuildMusicManager musicManager = musicManagers.get(guildId);
 
@@ -74,157 +197,124 @@ public class StuffyBot extends ListenerAdapter {
         return musicManager;
     }
 
-    @Override
-    public void onGuildMessageReceived(GuildMessageReceivedEvent event) {
-        String[] command = event.getMessage().getContentRaw().split(" ");
-
-        if(botChannel.containsKey(event.getGuild())) {
-            if(event.getChannel().equals(botChannel.get(event.getGuild()))) {
-                if (command[0].equalsIgnoreCase("s!play")) {
-                    if(botChannel.containsKey(event.getGuild())) {
-                        if(!this.isUrl(command[1])) {
-                            StringBuilder stringBuilder = new StringBuilder();
-
-                            for(int i = 1; i < command.length; i++) {
-                                stringBuilder.append(command[i] + " ");
-                            }
-                            String searchyt = stringBuilder.toString();
-                            searchyt = searchyt.replace(" ", "+");
-
-                            String url = "https://www.googleapis.com/youtube/v3/search?part=snippet&regionCode=US&maxResults=1&order=relevance&q=" + searchyt + "&key=" + "AIzaSyB8kcP9p4Fx7OG17jv2CrvOimsF9AnHtvA";
-
-                            try {
-                                Document doc = Jsoup.connect(url).timeout(10 * 1000).ignoreContentType(true).get();
-                                String jsonFormat = doc.text();
-                                JSONObject jsonObject = new JSONObject(jsonFormat);
-                                JSONArray jsonArray = jsonObject.getJSONArray("items");
-                                JSONObject item = (JSONObject) jsonArray.get(0);
-                                JSONObject results = item.getJSONObject("id");
-
-                                String topResult = results.getString("videoId");
-                                String finalUrl = "https://youtube.com/watch?v=" + topResult;
-
-                                logger.info("Video id: " + topResult);
-                                loadAndPlay(event.getChannel(), finalUrl, event.getMember());
-                            } catch (IOException e) {
-                                e.printStackTrace();
-                            }
-                        } else {
-                            loadAndPlay(botChannel.get(event.getGuild()), command[1], event.getMember());
-                        }
-                    } else {
-                        event.getChannel().sendMessage("You need to set a music channel first! Usage: s!setchannel <channelid>").queue();
-                    }
-                } else if (command[0].equalsIgnoreCase("s!skip")) {
-                    if(botChannel.containsKey(event.getGuild())) {
-                        skipTrack(botChannel.get(event.getGuild()));
-                    } else {
-                        event.getChannel().sendMessage("You need to set a music channel first! Usage: s!setchannel <channelid>").queue();
-                    }
-                } else if(command[0].equalsIgnoreCase("s!volume")) {
-                    try {
-                        int num = Integer.parseInt(command[1]);
-                        if(!(num > 200) || !(num < 0)) {
-                            getGuildAudioPlayer(event.getGuild()).player.setVolume(num);
-                            event.getChannel().sendMessage("The volume is now set to " + num);
-                        } else {
-                            event.getChannel().sendMessage("The volume needs to be 0-200!").queue();
-                        }
-                    } catch(NumberFormatException e) {
-                        e.printStackTrace();
-                        event.getChannel().sendMessage("You need to input an integer!").queue();
-                    }
-                } else if(command[0].equalsIgnoreCase("s!pause")) {
-                    if(!this.getGuildAudioPlayer(event.getGuild()).player.isPaused()) {
-                        this.getGuildAudioPlayer(event.getGuild()).player.setPaused(true);
-                        event.getChannel().sendMessage("Audio player paused.").queue();
-                    } else {
-                        event.getChannel().sendMessage("The audio player is already paused!").queue();
-                    }
-                } else if(command[0].equalsIgnoreCase("s!resume")) {
-                    if(this.getGuildAudioPlayer(event.getGuild()).player.isPaused()) {
-                        this.getGuildAudioPlayer(event.getGuild()).player.setPaused(false);
-                        event.getChannel().sendMessage("Audio player resumed.").queue();
-                    } else {
-                        event.getChannel().sendMessage("The audio player is already playing!").queue();
-                    }
-                } else if(command[0].equalsIgnoreCase("s!testconsole")) {
-                    getGuildAudioPlayer(event.getGuild()).scheduler.removeTrack(1);
-                } else if(command[0].equalsIgnoreCase("s!remove")) {
-                    int num = Integer.parseInt(command[1]);
-                    getGuildAudioPlayer(event.getGuild()).scheduler.removeTrack(num);
-                } else if(command[0].equalsIgnoreCase("s!disconnect")) {
-                    if(event.getGuild().getAudioManager().isConnected()) {
-                        event.getGuild().getAudioManager().closeAudioConnection();
-                        event.getChannel().sendMessage("Successfully closed Audio Connection.").queue();
-                    } else {
-                        event.getChannel().sendMessage("Can't disconnect. Bot is not connected to any voice channels.").queue();
-                    }
-                } else if(command[0].equalsIgnoreCase("s!playing")) {
-                    if(getGuildAudioPlayer(event.getGuild()).player.getPlayingTrack() != null) {
-                        botChannel.get(event.getGuild()).sendMessage("Now playing: " + getGuildAudioPlayer(event.getGuild()).player.getPlayingTrack().getInfo().title).queue();
-                    } else {
-                        event.getChannel().sendMessage("There is nothing playing.").queue();
-                    }
-                } else if(command[0].equalsIgnoreCase("s!queue")) {
-                    EmbedBuilder embed = new EmbedBuilder();
-                    embed.setTitle("Stuffy Queue");
-                    ArrayList<AudioTrack> conversion = new ArrayList<>(getGuildAudioPlayer(event.getGuild()).scheduler.getQueue());
-                    if(getGuildAudioPlayer(event.getGuild()).player.getPlayingTrack() != null) {
-                        embed.addField("Now playing", getGuildAudioPlayer(event.getGuild()).player.getPlayingTrack().getInfo().title, true);
-                        if(conversion.isEmpty()) {
-                            embed.setDescription("There is currently nothing in the queue");
-                        } else {
-
-                            StringBuilder builder = new StringBuilder();
-                            for(int j = 0; j < conversion.size(); j++) {
-                                builder.append((j+1) + ". " + conversion.get(j).getInfo().title + "\n");
-                            }
-                            embed.setDescription(builder.toString());
-                        }
-                        event.getChannel().sendMessage(embed.build()).queue();
-                    } else {
-                        event.getChannel().sendMessage("There is nothing playing.").queue();
-                    }
-                }
-            }
-        }
-        if(command[0].equalsIgnoreCase("s!setchannel")) {
-            if(!botChannel.containsKey(event.getGuild())) {
-                botChannel.put(event.getGuild(), event.getGuild().getTextChannelById(command[1]));
-                event.getChannel().sendMessage("Successfully done! You can now use all the features.").queue();
-            } else {
-               event.getChannel().sendMessage("You have already set your music channel.").queue();
-
-            }
-        }
-
-        super.onGuildMessageReceived(event);
-    }
-
-    private void loadAndPlay(final TextChannel channel, final String trackUrl, Member member) {
+    public void loadAndPlay(final TextChannel channel, final String trackUrl, Member member) {
         final GuildMusicManager musicManager = getGuildAudioPlayer(channel.getGuild());
 
         playerManager.loadItemOrdered(musicManager, trackUrl, new AudioLoadResultHandler() {
+
             @Override
             public void trackLoaded(AudioTrack track) {
-                channel.sendMessage("Adding to queue " + track.getInfo().title).queue();
-                logger.info("Queued '" + track.getInfo().title + "' to guild '" + channel.getGuild().getName() + "'");
-                play(channel.getGuild(), musicManager, track, member);
+                if (Objects.requireNonNull(member.getVoiceState()).getChannel() != null) {
+                    try {
+                        logger.info("Source of audioTrack: " + track.getSourceManager().getSourceName());
+                        switch (track.getSourceManager().getSourceName()) {
+                            case "youtube": {
+                                String id = track.getInfo().uri.replace("https://www.youtube.com/watch?v=", "");
+                                EmbedBuilder builder = new EmbedBuilder();
+                                builder.setFooter(version + " / TheTHINGYEEEEE#1859");
+
+                                builder.setTitle("Track added.", track.getInfo().uri);
+                                builder.addField("Track name:", track.getInfo().title, false);
+                                builder.addField("Video ID:", id, true);
+
+                                URL thumbnailUrl = new URL("https://i.ytimg.com/vi/" + id + "/mqdefault.jpg");
+                                BufferedImage thumbnail = ImageIO.read(thumbnailUrl);
+                                int[] rgbArr = ColorThief.getColor(thumbnail);
+                                Color color = new Color(rgbArr[0], rgbArr[1], rgbArr[2]);
+                                builder.setColor(color);
+
+                                // Used to set the image with the video's thumbnail.
+                                builder.setImage("https://i.ytimg.com/vi/" + id + "/mqdefault.jpg");
+
+                                channel.sendMessage(builder.build()).queue();
+                                logger.info("Queued '" + track.getInfo().title + "' to guild '" + channel.getGuild().getName() + "'");
+                                play(channel.getGuild(), musicManager, track, member, channel);
+                                break;
+                            }
+                            case "bandcamp": {
+                                String thumbnailURI = "https://cdn.thingyservers.xyz/images/bandcamp-logo.png";
+                                logger.info(track.getInfo().uri);
+                                EmbedBuilder builder = new EmbedBuilder();
+                                builder.setFooter(version + " / TheTHINGYEEEEE#1859");
+
+                                builder.setTitle("Track added.", track.getInfo().uri);
+                                builder.addField("Track name:", track.getInfo().title, false);
+                                builder.addField("Music ID:", "null", true);
+
+                                URL thumbnailUrl = new URL(thumbnailURI);
+                                BufferedImage thumbnail = ImageIO.read(thumbnailUrl);
+                                int[] rgbArr = ColorThief.getColor(thumbnail);
+                                Color color = new Color(rgbArr[0], rgbArr[1], rgbArr[2]);
+                                builder.setColor(color);
+
+                                // Used to set the image with the video's thumbnail.
+                                builder.setImage(thumbnailUrl.getHost());
+
+                                channel.sendMessage(builder.build()).queue();
+                                logger.info("Queued '" + track.getInfo().title + "' to guild '" + channel.getGuild().getName() + "'");
+                                play(channel.getGuild(), musicManager, track, member, channel);
+                                break;
+                            }
+                            case "twitch": {
+                                String thumbnailURI = "https://cdn.thingyservers.xyz/images/twitch-logo.png";
+                                logger.info(track.getInfo().uri);
+                                EmbedBuilder builder = new EmbedBuilder();
+                                builder.setFooter(version + " / TheTHINGYEEEEE#1859");
+
+                                builder.setTitle("Track added.", track.getInfo().uri);
+                                builder.addField("Track name:", track.getInfo().title, false);
+                                builder.addField("Music ID:", "null", true);
+
+                                URL thumbnailUrl = new URL(thumbnailURI);
+                                BufferedImage thumbnail = ImageIO.read(thumbnailUrl);
+                                int[] rgbArr = ColorThief.getColor(thumbnail);
+                                Color color = new Color(rgbArr[0], rgbArr[1], rgbArr[2]);
+                                builder.setColor(color);
+
+                                // Used to set the image with the video's thumbnail.
+                                builder.setImage(thumbnailURI);
+
+                                channel.sendMessage(builder.build()).queue();
+                                logger.info("Queued '" + track.getInfo().title + "' to guild '" + channel.getGuild().getName() + "'");
+                                play(channel.getGuild(), musicManager, track, member, channel);
+                                break;
+                            }
+                        }
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                } else {
+                    String id = track.getInfo().uri.replace("https://www.youtube.com/watch?v=", "");
+
+                    EmbedBuilder builder = new EmbedBuilder();
+                    builder.setTitle("Track not added.", track.getInfo().uri);
+                    builder.setDescription("You need to be in a voice channel first!");
+                    builder.addField("Track name:", track.getInfo().title, true);
+                    builder.addField("Video ID:", id, true);
+                    builder.setImage("https://i.ytimg.com/vi/" + id + "/mqdefault.jpg");
+                    builder.setFooter(version + " / TheTHINGYEEEEE#1859");
+                    builder.setColor(Color.RED);
+                    channel.sendMessage(builder.build()).queue();
+                }
             }
 
             @Override
             public void playlistLoaded(AudioPlaylist playlist) {
-                AudioTrack firstTrack = playlist.getSelectedTrack();
-
-                if (firstTrack == null) {
-                    firstTrack = playlist.getTracks().get(0);
+                if (playlist.getTracks() != null) {
+                    logger.info("Loaded playlist! Tracks: " + playlist.getTracks().size() + " Guild: " + channel.getGuild().getName());
+                    if (playlist.getTracks().size() <= 15) {
+                        for (int i = 0; i < playlist.getTracks().size(); i++) {
+                            play(channel.getGuild(), musicManager, playlist.getTracks().get(i), member, channel);
+                        }
+                        channel.sendMessage(playlist.getTracks().size() + " tracks added to queue.").queue();
+                    } else {
+                        channel.sendMessage("Sorry but you can only play 15 tracks on the playlist.").queue();
+                        for (int i = 0; i < 14; i++) {
+                            play(channel.getGuild(), musicManager, playlist.getTracks().get(i), member, channel);
+                        }
+                        channel.sendMessage("15 tracks added to queue.").queue();
+                    }
                 }
-
-                channel.sendMessage("Adding to queue " + firstTrack.getInfo().title + " (first track of playlist " + playlist.getName() + ")").queue();
-                logger.info("Queued playlist '" + playlist.getName() + "' to guild '" + channel.getGuild().getName() + "'");
-
-                play(channel.getGuild(), musicManager, firstTrack, member);
 
             }
 
@@ -241,13 +331,13 @@ public class StuffyBot extends ListenerAdapter {
         });
     }
 
-    private void play(Guild guild, GuildMusicManager musicManager, AudioTrack track, Member member) {
-        connectToUserVoiceChannel(guild.getAudioManager(), member);
+    private void play(Guild guild, GuildMusicManager musicManager, AudioTrack track, Member member, TextChannel channel) {
+        connectToUserVoiceChannel(guild.getAudioManager(), member, channel);
 
         musicManager.scheduler.queue(track);
     }
 
-    private void skipTrack(TextChannel channel) {
+    public void skipTrack(TextChannel channel) {
         GuildMusicManager musicManager = getGuildAudioPlayer(channel.getGuild());
         musicManager.scheduler.nextTrack();
 
@@ -255,26 +345,24 @@ public class StuffyBot extends ListenerAdapter {
         logger.info("Skipped track. Guild name: " + channel.getGuild().getName());
     }
 
-    private static void connectToUserVoiceChannel(AudioManager audioManager, Member member) {
+    private void connectToUserVoiceChannel(AudioManager audioManager, Member member, TextChannel channel) {
         if (!audioManager.isConnected() && !audioManager.isAttemptingToConnect()) {
-            VoiceChannel connectedChannel = member.getVoiceState().getChannel();
-            if(connectedChannel == null) {
-                botChannel.get(member.getGuild()).sendMessage("You need to connect to a voice channel first!").queue();
+            VoiceChannel connectedChannel = Objects.requireNonNull(member.getVoiceState()).getChannel();
+            if (connectedChannel == null) {
+                channel.sendMessage("You need to connect to a voice channel first!").queue();
+                this.getGuildAudioPlayer(channel.getGuild()).scheduler.clearQueue(logger, channel.getGuild());
             } else {
                 audioManager.openAudioConnection(connectedChannel);
                 logger.info("Successfully opened Audio Connection. Guild name: " + audioManager.getGuild().getName());
             }
         }
     }
+
     public static boolean isUrl(String link) {
         return (link.contains("https://") || link.contains("http://"));
     }
 
-    @Override
-    public void onReady(@NotNull ReadyEvent event) {
-        String botUser = event.getJDA().getSelfUser().getName() + "#" + event.getJDA().getSelfUser().getDiscriminator();
-        logger.info("Logged in as " + botUser);
-        super.onReady(event);
+    public String getVersion() {
+        return version;
     }
-
 }
