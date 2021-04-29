@@ -1,4 +1,6 @@
 # StuffyBot
+<img src="https://img.shields.io/github/issues/TheTHINGYEEE/StuffyBot"><img src="https://img.shields.io/github/license/TheTHINGYEEE/StuffyBot">
+
 A music discord bot made entirely from Java using the JDA library.
 
 # Features
