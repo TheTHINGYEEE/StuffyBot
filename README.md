@@ -50,3 +50,8 @@ First, at your discord window/app, go to your "User Settings" by clicking the ge
 10. And with that, the setup is done! You can use/send ,help on that channel for more information about the commands.
 
       ![image](https://user-images.githubusercontent.com/68848247/116548829-5b914d80-a927-11eb-881c-4f171f90285e.png)
+
+# License
+TheTHINGYEEE/StuffyBot is licensed with **GNU General Public License 3.0**
+
+Permissions of this strong copyleft license are conditioned on making available complete source code of licensed works and modifications, which include larger works using a licensed work, under the same license. Copyright and license notices must be preserved. Contributors provide an express grant of patent rights.
