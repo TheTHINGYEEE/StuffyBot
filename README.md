@@ -15,6 +15,7 @@ This will show you the step-by-step process on how to setup StuffyBot on your di
 
 1. Invite StuffyBot to your discord server using https://thingyservers.xyz. Make sure to follow the instructions there!
 2. Once, StuffyBot is on your server, we need to set your music channel. 
-First, at your discord window/app, go to your "User Settings" by clicking the gear icon near to your discord tag.
-![image](https://user-images.githubusercontent.com/68848247/116547140-13712b80-a925-11eb-89cd-b672d57f5d8c.png)
+First, at your discord window/app, go to your "User Settings" by clicking the gear icon near to your discord tag (bottom-left corner).
+
+![image](https://user-images.githubusercontent.com/68848247/116547283-44e9f700-a925-11eb-81da-cbfa342e2c13.png)
 3. 
