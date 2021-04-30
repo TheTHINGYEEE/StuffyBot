@@ -258,7 +258,7 @@ public class CommandsAdded extends ListenerAdapter {
                             for (int j = 0; j < conversion.size(); j++) {
                                 builder.append(j + 1).append(". ").append(conversion.get(j).getInfo().title).append("\n");
                             }
-                            embed.addField("Queued songs:", builder.toString(), true);
+                            embed.addField("Queued songs:", builder.toString(), false);
                         }
                         event.getChannel().sendMessage(embed.build()).queue();
                     } else {

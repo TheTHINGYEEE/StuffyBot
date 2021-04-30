@@ -109,7 +109,7 @@ public class StuffyBot extends ListenerAdapter {
 
         // If update mode is on, activate the beta bot, not the main bot.
         // If update mode is off, activate the main bot, not the beta bot.
-        token = "[redacted]";
+        token = "NzgxNzY1OTA0MDMxNTQ3NDQy.X8CaPA.jvtijGf6bKDs7PXIBY9O1LuaRbk";
         if (updateMode) {
             logger.info("Update mode is on!");
         } else {
@@ -157,6 +157,7 @@ public class StuffyBot extends ListenerAdapter {
             String scanned = scanner.nextLine();
             if (scanned.equalsIgnoreCase("stop")) {
                 logger.info("Ending all process...");
+                jda.shutdown();
                 System.exit(69);
             }
         }
@@ -181,6 +182,14 @@ public class StuffyBot extends ListenerAdapter {
 
         AudioSourceManagers.registerRemoteSources(playerManager);
         AudioSourceManagers.registerLocalSource(playerManager);
+    }
+
+    public static boolean isUrl(String link) {
+        return (link.contains("https://") || link.contains("http://"));
+    }
+
+    public String getVersion() {
+        return version;
     }
 
     public synchronized GuildMusicManager getGuildAudioPlayer(Guild guild) {
@@ -356,13 +365,5 @@ public class StuffyBot extends ListenerAdapter {
                 logger.info("Successfully opened Audio Connection. Guild name: " + audioManager.getGuild().getName());
             }
         }
-    }
-
-    public static boolean isUrl(String link) {
-        return (link.contains("https://") || link.contains("http://"));
-    }
-
-    public String getVersion() {
-        return version;
     }
 }

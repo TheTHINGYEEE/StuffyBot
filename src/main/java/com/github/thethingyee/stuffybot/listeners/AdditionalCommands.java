@@ -18,6 +18,7 @@
 package com.github.thethingyee.stuffybot.listeners;
 
 import com.github.thethingyee.stuffybot.StuffyBot;
+import com.github.thethingyee.stuffybot.cleancode.NetworkTester;
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.Permission;
 import net.dv8tion.jda.api.events.message.guild.GuildMessageReceivedEvent;
@@ -25,17 +26,19 @@ import net.dv8tion.jda.api.hooks.ListenerAdapter;
 import org.jetbrains.annotations.NotNull;
 import oshi.SystemInfo;
 import oshi.hardware.CentralProcessor;
-import oshi.hardware.GlobalMemory;
 import oshi.hardware.GraphicsCard;
 import oshi.hardware.HardwareAbstractionLayer;
 
 import java.awt.*;
+import java.util.Objects;
 
-import static com.github.thethingyee.stuffybot.StuffyBot.*;
+import static com.github.thethingyee.stuffybot.StuffyBot.botChannels;
+import static com.github.thethingyee.stuffybot.StuffyBot.prefix;
 
 public class AdditionalCommands extends ListenerAdapter {
 
     private final StuffyBot stuffyBot;
+    private long[] previousCPUTick = new long[CentralProcessor.TickType.values().length];
 
     public AdditionalCommands(StuffyBot stuffyBot) {
         this.stuffyBot = stuffyBot;
@@ -48,50 +51,61 @@ public class AdditionalCommands extends ListenerAdapter {
         if (botChannels.containsKey(event.getGuild())) {
             if (botChannels.get(event.getGuild()).contains(event.getChannel())) {
                 if (command[0].equalsIgnoreCase(prefix + "usage")) {
-                    if (event.getMember().hasPermission(Permission.ADMINISTRATOR)) {
+                    if (Objects.requireNonNull(event.getMember()).hasPermission(Permission.ADMINISTRATOR)) {
+                        long startTime = System.nanoTime();
+
+                        NetworkTester tester = new NetworkTester(event.getGuild());
+                        double regionMS = tester.testPing();
+
                         SystemInfo systemInfo = new SystemInfo();
                         HardwareAbstractionLayer layer = systemInfo.getHardware();
                         CentralProcessor proc = layer.getProcessor();
-
-                        GlobalMemory mem = layer.getMemory();
 
                         CentralProcessor.ProcessorIdentifier identifier = proc.getProcessorIdentifier();
 
                         GraphicsCard graphics = null;
 
-                        for(GraphicsCard gCard : layer.getGraphicsCards()) {
-                            if(gCard != null) {
+                        for (GraphicsCard gCard : layer.getGraphicsCards()) {
+                            if (gCard != null) {
                                 graphics = gCard;
+                                break;
                             }
                         }
+
+                        Runtime runtime = Runtime.getRuntime();
+
+                        long totalMem = runtime.totalMemory();
+                        long availMem = runtime.freeMemory();
+
+                        float finalMem = (float) (totalMem - availMem) / (1024 * 1024);
 
                         EmbedBuilder embed = new EmbedBuilder();
 
                         embed.setColor(Color.CYAN);
 
-                        embed.setTitle(stuffyBot.botName + "'s Hoster Statistics");
-                        embed.setDescription("See the statistics of " + stuffyBot.botName + "'s bot hoster.\n \nThe CPU usage can be mostly at 0.0% \nbecause bots don't usually tend \nto use CPUs that much.");
+                        embed.setDescription("See the statistics of " + stuffyBot.botName + "'s bot hoster for nerds.\n");
+                        embed.getDescriptionBuilder().append("\nServer Region: ").append(tester.getRegion());
+                        embed.getDescriptionBuilder().append("\nConnection ping: ").append(Math.round(regionMS)).append(" ms (NOT THAT ACCURATE)");
+
+                        embed.setFooter(stuffyBot.getVersion() + " / TheTHINGYEEEEE#1859");
 
                         embed.addField("Processor Name:", identifier.getName(), false);
                         embed.addField("Frequency:", (identifier.getVendorFreq() / 1000000000.0) + " GHz", true);
-                        embed.addField("# of CPUs:", proc.getLogicalProcessorCount() + "", true);
+                        embed.addField("# of Logical CPUs:", proc.getLogicalProcessorCount() + "", true);
 
-                        embed.addField(" ", " ", false);
-
+                        assert graphics != null;
                         embed.addField("Graphics:", graphics.getName(), false);
-                        embed.addField("Virtual RAM:", (graphics.getVRam() / (1024.0*1024.0) / 1024.0) + " GB", true);
+                        embed.addField("Video Memory:", (graphics.getVRam() / (1024.0 * 1024.0) / 1024.0) + " GB", true);
                         embed.addField("Device ID:", graphics.getDeviceId(), true);
 
-                        embed.addField(" ", " ", false);
-
-                        double cpu = proc.getSystemCpuLoadBetweenTicks(proc.getSystemCpuLoadTicks()) * 1000;
+                        long cpu = Math.round(proc.getSystemCpuLoadBetweenTicks(previousCPUTick) * 100);
+                        previousCPUTick = proc.getSystemCpuLoadTicks();
 
                         embed.addField("OS:", System.getProperty("os.name") + " " + System.getProperty("os.version") + " / " + System.getProperty("os.arch"), false);
                         embed.addField("CPU Usage:", cpu + "%", true);
-                        embed.addField("RAM Usage: ", ((mem.getTotal() - mem.getAvailable())) + " GB", true);
+                        embed.addField("RAM Usage: ", finalMem + " MB", true);
 
-
-                        embed.setFooter(stuffyBot.getVersion() + " / TheTHINGYEEEEE#1859");
+                        embed.setTitle(stuffyBot.botName + "'s Hoster Statistics (" + Math.round(((System.nanoTime() - startTime) - regionMS) / 1e6) + " ms)");
 
                         event.getChannel().sendMessage(embed.build()).queue();
                     } else {
