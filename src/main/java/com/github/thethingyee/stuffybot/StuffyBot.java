@@ -109,7 +109,7 @@ public class StuffyBot extends ListenerAdapter {
 
         // If update mode is on, activate the beta bot, not the main bot.
         // If update mode is off, activate the main bot, not the beta bot.
-        token = "NzgxNzY1OTA0MDMxNTQ3NDQy.X8CaPA.jvtijGf6bKDs7PXIBY9O1LuaRbk";
+        token = "[redacted]";
         if (updateMode) {
             logger.info("Update mode is on!");
         } else {
