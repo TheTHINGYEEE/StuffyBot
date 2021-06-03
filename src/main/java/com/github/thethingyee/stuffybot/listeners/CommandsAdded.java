@@ -17,7 +17,12 @@
 
 package com.github.thethingyee.stuffybot.listeners;
 
+import com.github.natanbc.lavadsp.lowpass.LowPassPcmAudioFilter;
+import com.github.natanbc.lavadsp.timescale.TimescalePcmAudioFilter;
+import com.github.natanbc.lavadsp.util.FloatToFloatFunction;
 import com.github.thethingyee.stuffybot.StuffyBot;
+import com.github.thethingyee.stuffybot.TrackScheduler;
+import com.sedmelluq.discord.lavaplayer.filter.ChannelCountPcmAudioFilter;
 import com.sedmelluq.discord.lavaplayer.player.AudioPlayer;
 import com.sedmelluq.discord.lavaplayer.track.AudioTrack;
 import net.dv8tion.jda.api.EmbedBuilder;
@@ -42,9 +47,10 @@ import static com.github.thethingyee.stuffybot.cleancode.WorkingWithFiles.saveFi
 public class CommandsAdded extends ListenerAdapter {
 
     private final StuffyBot stuffyBot;
-    
+    private boolean filterOnline = false;
+
     String youtubeApiKey = "AIzaSyDfERF_5fKj5lXIt9TrS38uE-o_K-oO66g";
-    
+
     public static HashMap<Guild, Message> audioPlayerActive = new HashMap<>();
 
     public CommandsAdded(StuffyBot stuffyBot) {
@@ -107,7 +113,7 @@ public class CommandsAdded extends ListenerAdapter {
                         stuffyBot.loadAndPlay(event.getChannel(), command[1], event.getMember());
                     }
 
-                } else if (command[0].equalsIgnoreCase(prefix + "skip")) {
+                } else if (command[0].equalsIgnoreCase(prefix + "skip") || command[0].equalsIgnoreCase(prefix + "next")) {
                     if (botChannels.containsKey(event.getGuild())) {
                         stuffyBot.skipTrack(event.getChannel());
                     } else {
@@ -135,8 +141,12 @@ public class CommandsAdded extends ListenerAdapter {
                     try {
                         int num = Integer.parseInt(command[1]);
 
-                        stuffyBot.getGuildAudioPlayer(event.getGuild()).scheduler.bassBoost(num);
-                        event.getChannel().sendMessage("The bass is now set to " + num + "%\n" + "The effect will take place in a few seconds.").queue();
+                        if ((num <= 150) && (num >= 0)) {
+                            stuffyBot.getGuildAudioPlayer(event.getGuild()).scheduler.bassBoost(num, event.getGuild().getName(), event.getChannel());
+                            event.getChannel().sendMessage("The bass is now set to " + num + "%\n" + "The effect will take place in a few seconds.").queue();
+                        } else {
+                            event.getChannel().sendMessage("The bass percentage can only be 0-150%").queue();
+                        }
                     } catch (NumberFormatException e) {
                         e.printStackTrace();
                         event.getChannel().sendMessage("You need to input an integer!").queue();
@@ -218,8 +228,7 @@ public class CommandsAdded extends ListenerAdapter {
                     } else {
                         event.getChannel().sendMessage("The audio player is already paused!").queue();
                     }
-                }
-                else if (command[0].equalsIgnoreCase(prefix + "resume")) {
+                } else if (command[0].equalsIgnoreCase(prefix + "resume")) {
                     if (this.stuffyBot.getGuildAudioPlayer(event.getGuild()).player.isPaused()) {
                         this.stuffyBot.getGuildAudioPlayer(event.getGuild()).player.setPaused(false);
                         event.getChannel().sendMessage("Audio player resumed.").queue();
@@ -341,6 +350,27 @@ public class CommandsAdded extends ListenerAdapter {
                         }
                         audioPlayerActive.put(event.getGuild(), message);
                     });
+                } else if(command[0].equalsIgnoreCase(prefix + "loop") || command[0].equalsIgnoreCase(prefix + "repeat")) {
+                    TrackScheduler scheduler = stuffyBot.getGuildAudioPlayer(event.getGuild()).scheduler;
+                    stuffyBot.getGuildAudioPlayer(event.getGuild()).scheduler.setRepeating(!scheduler.isRepeating());
+                    if(!scheduler.isRepeating()) {
+                        event.getChannel().sendMessage("Song now set to NOT repeating.").queue();
+                    } else {
+                        event.getChannel().sendMessage("Song now set to repeating.").queue();
+                    }
+                } else if(command[0].equalsIgnoreCase(prefix + "tdo")) {
+                    float smooth = Float.parseFloat(command[1]);
+                    if(filterOnline) {
+                        stuffyBot.getGuildAudioPlayer(event.getGuild()).player.setFilterFactory(null);
+                        filterOnline = false;
+                    }
+                    stuffyBot.getGuildAudioPlayer(event.getGuild()).player.setFilterFactory((track, format, output) -> {
+                        LowPassPcmAudioFilter audioFilter = new LowPassPcmAudioFilter(output, format.channelCount);
+                        audioFilter.setSmoothing(200.0f);
+                        return Collections.singletonList(audioFilter);
+                    });
+                    event.getChannel().sendMessage("Set the thing to " + smooth).queue();
+                    filterOnline = true;
                 }
             }
         }

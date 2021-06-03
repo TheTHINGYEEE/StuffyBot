@@ -88,7 +88,7 @@ public class StuffyBot extends ListenerAdapter {
         logger.addHandler(handler);
 
         // Update mode to tell if the bot is updating..
-        boolean updateMode = true;
+        boolean updateMode = false;
 
         // Array of statuses that will be cycling through the bot's status.
         Activity[] statuses = {
@@ -109,7 +109,7 @@ public class StuffyBot extends ListenerAdapter {
 
         // If update mode is on, activate the beta bot, not the main bot.
         // If update mode is off, activate the main bot, not the beta bot.
-        token = "[redacted]";
+        token = "NzgxNzY1OTA0MDMxNTQ3NDQy.X8CaPA.SMYtuR7zz04V6CVw2Q8qJThP7gY";
         if (updateMode) {
             logger.info("Update mode is on!");
         } else {
@@ -266,6 +266,7 @@ public class StuffyBot extends ListenerAdapter {
                             }
                             case "twitch": {
                                 String thumbnailURI = "https://cdn.thingyservers.xyz/images/twitch-logo.png";
+
                                 logger.info(track.getInfo().uri);
                                 EmbedBuilder builder = new EmbedBuilder();
                                 builder.setFooter(version + " / TheTHINGYEEEEE#1859");
@@ -273,6 +274,31 @@ public class StuffyBot extends ListenerAdapter {
                                 builder.setTitle("Track added.", track.getInfo().uri);
                                 builder.addField("Track name:", track.getInfo().title, false);
                                 builder.addField("Music ID:", "null", true);
+
+                                URL thumbnailUrl = new URL(thumbnailURI);
+                                BufferedImage thumbnail = ImageIO.read(thumbnailUrl);
+                                int[] rgbArr = ColorThief.getColor(thumbnail);
+                                Color color = new Color(rgbArr[0], rgbArr[1], rgbArr[2]);
+                                builder.setColor(color);
+
+                                // Used to set the image with the video's thumbnail.
+                                builder.setImage(thumbnailURI);
+
+                                channel.sendMessage(builder.build()).queue();
+                                logger.info("Queued '" + track.getInfo().title + "' to guild '" + channel.getGuild().getName() + "'");
+                                play(channel.getGuild(), musicManager, track, member, channel);
+                                break;
+                            }
+                            case "local": {
+                                String thumbnailURI = "https://cdn.thingyservers.xyz/images/headphones-logo.png";
+
+                                logger.info(track.getInfo().uri);
+                                EmbedBuilder builder = new EmbedBuilder();
+                                builder.setFooter(version + " / TheTHINGYEEEEE#1859");
+
+                                builder.setTitle("Track added.");
+                                builder.addField("Track name:", track.getInfo().title, false);
+                                builder.addField("Music ID:", "Local Audio", true);
 
                                 URL thumbnailUrl = new URL(thumbnailURI);
                                 BufferedImage thumbnail = ImageIO.read(thumbnailUrl);

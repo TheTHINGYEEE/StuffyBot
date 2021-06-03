@@ -38,7 +38,11 @@ import static com.github.thethingyee.stuffybot.StuffyBot.logger;
  * This class schedules tracks for the audio player. It contains the queue of tracks.
  */
 public class TrackScheduler extends AudioEventAdapter {
-    private static final float[] BASS_BOOST = {-0.05f, 0.07f, 0.16f, 0.03f, -0.05f, -0.11f};
+
+    private static final float[] BASS_BOOST = {0.15f, 0.14f, 0.13f, 0.14f, 0.05f, 0.01f, 0.02f, 0.03f, 0.04f, 0.05f, 0.06f, 0.07f, 0.08f, 0.09f, 0.1f};
+
+    private boolean repeating = false;
+    private AudioTrack lastTrack = null;
 
     private final AudioPlayer player;
     private final BlockingQueue<AudioTrack> queue;
@@ -86,10 +90,24 @@ public class TrackScheduler extends AudioEventAdapter {
     @Override
     public void onTrackEnd(AudioPlayer player, AudioTrack track, AudioTrackEndReason endReason) {
         // Only start the next track if the end reason is suitable for it (FINISHED or LOAD_FAILED)
+        this.lastTrack = track;
         if (endReason.mayStartNext) {
-            nextTrack();
+            if(repeating) {
+                player.startTrack(lastTrack.makeClone(), false);
+            } else {
+                nextTrack();
+            }
         }
     }
+
+    public boolean isRepeating() {
+        return repeating;
+    }
+
+    public void setRepeating(boolean repeating) {
+        this.repeating = repeating;
+    }
+
     public void removeTrack(int queueNumber, TextChannel channel) {
         List<AudioTrack> tracks = new ArrayList<>(queue);
         AudioTrack tracktoBeRemoved = tracks.get((queueNumber - 1));
@@ -112,17 +130,18 @@ public class TrackScheduler extends AudioEventAdapter {
         return queue;
     }
 
-    public void bassBoost(int percentage) {
+    public void bassBoost(int percentage, String guildName, TextChannel channel) {
         final int previousPercentage = this.boostPercentage;
         this.boostPercentage = percentage;
 
-        // Disable filter factory
         if (previousPercentage > 0 && percentage == 0) {
+            channel.sendMessage("Turning off equalizer...").queue();
             this.player.setFilterFactory(null);
             return;
         }
-        // Enable filter factory
+
         if (previousPercentage == 0 && percentage > 0) {
+            channel.sendMessage("Turning on equalizer...").queue();
             if (this.equalizer == null) {
                 this.equalizer = new EqualizerFactory();
             }
@@ -130,12 +149,20 @@ public class TrackScheduler extends AudioEventAdapter {
         }
 
         final float multiplier = percentage / 100.0f;
+        StringBuilder builder = new StringBuilder();
         for (int i = 0; i < BASS_BOOST.length; i++) {
             this.equalizer.setGain(i, BASS_BOOST[i] * multiplier);
+            builder.append(BASS_BOOST[i] * multiplier).append(", ");
         }
 
         this.boostPercentage = percentage;
-        logger.info("Successfully set the bass boost level.");
+        logger.info("Successfully set the bass boost level. Guild: " + guildName);
+        channel.sendMessage(builder.toString()).queue();
+        StringBuilder bands = new StringBuilder();
+        for(int i = 0; i < 14; i++) {
+            bands.append(this.equalizer.getGain(i) + ", ");
+        }
+        channel.sendMessage(bands.toString()).queue();
     }
 }
 
