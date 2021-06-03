@@ -33,6 +33,7 @@ import java.util.ArrayList;
 
 public class WorkingWithFiles {
 
+    @SuppressWarnings("ResultOfMethodCallIgnored")
     public static void saveFile(ArrayList<TextChannel> channels, Guild guild) throws URISyntaxException, IOException {
 
         String jsonFile;
@@ -93,6 +94,7 @@ public class WorkingWithFiles {
             e.printStackTrace();
         }
     }
+
     public static File getJarFile() throws URISyntaxException {
         return new File(System.getProperty("user.dir"));
     }

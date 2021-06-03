@@ -87,7 +87,7 @@ public class AdditionalCommands extends ListenerAdapter {
                         embed.getDescriptionBuilder().append("\nServer Region: ").append(tester.getRegion());
                         embed.getDescriptionBuilder().append("\nConnection ping: ").append(Math.round(regionMS)).append(" ms (NOT THAT ACCURATE)");
 
-                        embed.setFooter(stuffyBot.getVersion() + " / TheTHINGYEEEEE#1859");
+                        embed.setFooter(stuffyBot.getVersion() + " / " + stuffyBot.getBotConfig().getBotAuthor());
 
                         embed.addField("Processor Name:", identifier.getName(), false);
                         embed.addField("Frequency:", (identifier.getVendorFreq() / 1000000000.0) + " GHz", true);

@@ -17,6 +17,7 @@
 
 package com.github.thethingyee.stuffybot;
 
+import com.github.thethingyee.stuffybot.cleancode.*;
 import com.github.thethingyee.stuffybot.libraries.ColorThief;
 import com.github.thethingyee.stuffybot.listeners.*;
 import com.sedmelluq.discord.lavaplayer.player.AudioLoadResultHandler;
@@ -42,7 +43,7 @@ import net.dv8tion.jda.api.managers.AudioManager;
 import javax.imageio.ImageIO;
 import java.awt.*;
 import java.awt.image.BufferedImage;
-import java.io.IOException;
+import java.io.*;
 import java.net.URL;
 import java.util.*;
 import java.util.logging.ConsoleHandler;
@@ -64,7 +65,11 @@ public class StuffyBot extends ListenerAdapter {
     private static int currentStatus = 0;
 
     // To call the bot.
-    public static final String prefix = ",";
+    public static String prefix = "";
+
+    public static String token = "";
+
+    public static String author = "";
 
     // Version of the bot.
     public String version = "v2.6.1";
@@ -72,11 +77,20 @@ public class StuffyBot extends ListenerAdapter {
     // Name of the bot without any discriminators.
     public String botName;
 
+    public BotConfig botConfig;
+
     public static void main(String[] args) throws Exception {
 
         // Call in one single main class instance.
         // To use it in all classes who needs the main class instance.
         StuffyBot stuffyBot = new StuffyBot();
+
+        stuffyBot.botConfig = new BotConfig(new File(WorkingWithFiles.getJarFile() + "/config.json"));
+        stuffyBot.botConfig.initConfigurationFile();
+        prefix = stuffyBot.botConfig.getBotPrefix();
+        token = stuffyBot.botConfig.getBotToken();
+        author = stuffyBot.botConfig.getBotAuthor();
+        stuffyBot.version = stuffyBot.botConfig.getBotVersion();
 
         // Deletes the method logger and date logger.
         ConsoleHandler handler = new ConsoleHandler();
@@ -88,7 +102,7 @@ public class StuffyBot extends ListenerAdapter {
         logger.addHandler(handler);
 
         // Update mode to tell if the bot is updating..
-        boolean updateMode = false;
+        boolean updateMode = stuffyBot.botConfig.isUpdateMode();
 
         // Array of statuses that will be cycling through the bot's status.
         Activity[] statuses = {
@@ -104,17 +118,12 @@ public class StuffyBot extends ListenerAdapter {
                 Activity.watching("Vimeo to play music :O")
         };
 
-        // TOKEN MUST BE PRIVATE!!!
-        String token;
-
         // If update mode is on, activate the beta bot, not the main bot.
         // If update mode is off, activate the main bot, not the beta bot.
-        token = "NzgxNzY1OTA0MDMxNTQ3NDQy.X8CaPA.SMYtuR7zz04V6CVw2Q8qJThP7gY";
-        if (updateMode) {
-            logger.info("Update mode is on!");
-        } else {
-            logger.info("Update mode is off.");
-        }
+
+        String updateModeMsg = updateMode ? "Update mode is on" : "Update mode is off.";
+
+        logger.info(updateModeMsg);
 
         // Starting up the bot..
         logger.info("Starting up...");
@@ -220,7 +229,7 @@ public class StuffyBot extends ListenerAdapter {
                             case "youtube": {
                                 String id = track.getInfo().uri.replace("https://www.youtube.com/watch?v=", "");
                                 EmbedBuilder builder = new EmbedBuilder();
-                                builder.setFooter(version + " / TheTHINGYEEEEE#1859");
+                                builder.setFooter(version + " / " + getBotConfig().getBotAuthor());
 
                                 builder.setTitle("Track added.", track.getInfo().uri);
                                 builder.addField("Track name:", track.getInfo().title, false);
@@ -244,7 +253,7 @@ public class StuffyBot extends ListenerAdapter {
                                 String thumbnailURI = "https://cdn.thingyservers.xyz/images/bandcamp-logo.png";
                                 logger.info(track.getInfo().uri);
                                 EmbedBuilder builder = new EmbedBuilder();
-                                builder.setFooter(version + " / TheTHINGYEEEEE#1859");
+                                builder.setFooter(version + " / " + getBotConfig().getBotAuthor());
 
                                 builder.setTitle("Track added.", track.getInfo().uri);
                                 builder.addField("Track name:", track.getInfo().title, false);
@@ -269,7 +278,7 @@ public class StuffyBot extends ListenerAdapter {
 
                                 logger.info(track.getInfo().uri);
                                 EmbedBuilder builder = new EmbedBuilder();
-                                builder.setFooter(version + " / TheTHINGYEEEEE#1859");
+                                builder.setFooter(version + " / " + getBotConfig().getBotAuthor());
 
                                 builder.setTitle("Track added.", track.getInfo().uri);
                                 builder.addField("Track name:", track.getInfo().title, false);
@@ -294,7 +303,7 @@ public class StuffyBot extends ListenerAdapter {
 
                                 logger.info(track.getInfo().uri);
                                 EmbedBuilder builder = new EmbedBuilder();
-                                builder.setFooter(version + " / TheTHINGYEEEEE#1859");
+                                builder.setFooter(version + " / " + getBotConfig().getBotAuthor());
 
                                 builder.setTitle("Track added.");
                                 builder.addField("Track name:", track.getInfo().title, false);
@@ -327,7 +336,7 @@ public class StuffyBot extends ListenerAdapter {
                     builder.addField("Track name:", track.getInfo().title, true);
                     builder.addField("Video ID:", id, true);
                     builder.setImage("https://i.ytimg.com/vi/" + id + "/mqdefault.jpg");
-                    builder.setFooter(version + " / TheTHINGYEEEEE#1859");
+                    builder.setFooter(version + " / " + getBotConfig().getBotAuthor());
                     builder.setColor(Color.RED);
                     channel.sendMessage(builder.build()).queue();
                 }
@@ -381,7 +390,7 @@ public class StuffyBot extends ListenerAdapter {
     }
 
     private void connectToUserVoiceChannel(AudioManager audioManager, Member member, TextChannel channel) {
-        if (!audioManager.isConnected() && !audioManager.isAttemptingToConnect()) {
+        if (!audioManager.isConnected()) {
             VoiceChannel connectedChannel = Objects.requireNonNull(member.getVoiceState()).getChannel();
             if (connectedChannel == null) {
                 channel.sendMessage("You need to connect to a voice channel first!").queue();
@@ -391,5 +400,9 @@ public class StuffyBot extends ListenerAdapter {
                 logger.info("Successfully opened Audio Connection. Guild name: " + audioManager.getGuild().getName());
             }
         }
+    }
+
+    public BotConfig getBotConfig() {
+        return botConfig;
     }
 }

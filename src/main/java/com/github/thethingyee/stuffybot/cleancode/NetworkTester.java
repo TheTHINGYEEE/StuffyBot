@@ -1,11 +1,10 @@
 package com.github.thethingyee.stuffybot.cleancode;
 
-import net.dv8tion.jda.api.Region;
-import net.dv8tion.jda.api.entities.Guild;
+import net.dv8tion.jda.api.*;
+import net.dv8tion.jda.api.entities.*;
 
-import java.io.IOException;
-import java.net.MalformedURLException;
-import java.net.URL;
+import java.io.*;
+import java.net.*;
 
 public class NetworkTester {
 

@@ -34,6 +34,7 @@ public class AddReaction extends ListenerAdapter {
         this.stuffyBot = stuffyBot;
     }
 
+    @SuppressWarnings("ResultOfMethodCallIgnored")
     @Override
     public void onGuildMessageReactionAdd(GuildMessageReactionAddEvent event) {
 

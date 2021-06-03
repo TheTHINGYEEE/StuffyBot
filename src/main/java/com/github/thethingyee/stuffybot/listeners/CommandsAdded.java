@@ -17,46 +17,43 @@
 
 package com.github.thethingyee.stuffybot.listeners;
 
-import com.github.natanbc.lavadsp.lowpass.LowPassPcmAudioFilter;
-import com.github.natanbc.lavadsp.timescale.TimescalePcmAudioFilter;
-import com.github.natanbc.lavadsp.util.FloatToFloatFunction;
-import com.github.thethingyee.stuffybot.StuffyBot;
-import com.github.thethingyee.stuffybot.TrackScheduler;
-import com.sedmelluq.discord.lavaplayer.filter.ChannelCountPcmAudioFilter;
-import com.sedmelluq.discord.lavaplayer.player.AudioPlayer;
-import com.sedmelluq.discord.lavaplayer.track.AudioTrack;
-import net.dv8tion.jda.api.EmbedBuilder;
-import net.dv8tion.jda.api.Permission;
-import net.dv8tion.jda.api.entities.Guild;
-import net.dv8tion.jda.api.entities.Message;
-import net.dv8tion.jda.api.events.message.guild.GuildMessageReceivedEvent;
-import net.dv8tion.jda.api.hooks.ListenerAdapter;
-import org.json.JSONArray;
-import org.json.JSONObject;
-import org.jsoup.HttpStatusException;
-import org.jsoup.Jsoup;
-import org.jsoup.nodes.Document;
+import com.github.natanbc.lavadsp.lowpass.*;
+import com.github.thethingyee.stuffybot.*;
+import com.sedmelluq.discord.lavaplayer.player.*;
+import com.sedmelluq.discord.lavaplayer.track.*;
+import net.dv8tion.jda.api.*;
+import net.dv8tion.jda.api.entities.*;
+import net.dv8tion.jda.api.events.message.guild.*;
+import net.dv8tion.jda.api.hooks.*;
+import org.json.*;
+import org.jsoup.*;
+import org.jsoup.nodes.*;
 
-import java.io.IOException;
-import java.net.URISyntaxException;
+import java.io.*;
+import java.net.*;
 import java.util.*;
 
 import static com.github.thethingyee.stuffybot.StuffyBot.*;
-import static com.github.thethingyee.stuffybot.cleancode.WorkingWithFiles.saveFile;
+import static com.github.thethingyee.stuffybot.cleancode.WorkingWithFiles.*;
 
 public class CommandsAdded extends ListenerAdapter {
 
     private final StuffyBot stuffyBot;
     private boolean filterOnline = false;
 
-    String youtubeApiKey = "AIzaSyDfERF_5fKj5lXIt9TrS38uE-o_K-oO66g";
-
     public static HashMap<Guild, Message> audioPlayerActive = new HashMap<>();
+
+    String youtubeApiKey = null;
 
     public CommandsAdded(StuffyBot stuffyBot) {
         this.stuffyBot = stuffyBot;
+        try {
+            youtubeApiKey = stuffyBot.getBotConfig().getYoutubeKeys().get(0);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
-
+    
     @Override
     public void onGuildMessageReceived(GuildMessageReceivedEvent event) {
 
@@ -253,7 +250,7 @@ public class CommandsAdded extends ListenerAdapter {
                     }
                 } else if (command[0].equalsIgnoreCase(prefix + "queue")) {
                     EmbedBuilder embed = new EmbedBuilder();
-                    embed.setFooter(stuffyBot.getVersion() + " / TheTHINGYEEEEE#1859");
+                    embed.setFooter(stuffyBot.getVersion() + " / " + stuffyBot.getBotConfig().getBotAuthor());
                     embed.setColor(event.getGuild().getSelfMember().getColor());
                     embed.setTitle(stuffyBot.botName + " Queue");
                     ArrayList<AudioTrack> conversion = new ArrayList<>(stuffyBot.getGuildAudioPlayer(event.getGuild()).scheduler.getQueue());
@@ -290,7 +287,7 @@ public class CommandsAdded extends ListenerAdapter {
                             "10. " + prefix + "pos <seconds> - Changes the position of the current track playing in seconds.\n" +
                             "11. " + prefix + "forward <seconds> - Forwards the position of the current track playing in seconds.\n" +
                             "12. " + prefix + "rewind <seconds> - Rewinds the position of the current track playing in seconds.", true);
-                    builder.setFooter(stuffyBot.getVersion() + " / TheTHINGYEEEEE#1859");
+                    builder.setFooter(stuffyBot.getVersion() + " / " + stuffyBot.getBotConfig().getBotAuthor());
                     event.getChannel().sendMessage(builder.build()).queue();
                 } else if(command[0].equalsIgnoreCase(prefix + "player")) {
 
@@ -303,7 +300,7 @@ public class CommandsAdded extends ListenerAdapter {
                     builder.setDescription("Press ⏸ to pause.\n" +
                             "Press ▶️ to play.\n" +
                             "Press ⏭ to skip a song.");
-                    builder.setFooter(stuffyBot.getVersion() + " / TheTHINGYEEEEE#1859");
+                    builder.setFooter(stuffyBot.getVersion() + " / " + stuffyBot.getBotConfig().getBotAuthor());
 
                     boolean addPlayButton = false;
                     boolean addNextButton;
@@ -377,8 +374,11 @@ public class CommandsAdded extends ListenerAdapter {
         if (command[0].equalsIgnoreCase(prefix + "setchannel")) {
             if(Objects.requireNonNull(event.getMember()).hasPermission(Permission.MANAGE_CHANNEL)) {
                 if (!botChannels.containsKey(event.getGuild())) {
-                    if (event.getGuild().getTextChannelById(command[1]) != null) {
-                        stuffyBot.channels.add(event.getGuild().getTextChannelById(command[1]));
+
+                    String channelId = (!command[1].equalsIgnoreCase("this")) ? command[1] : event.getChannel().getId();
+
+                    if (event.getGuild().getTextChannelById(channelId) != null) {
+                        stuffyBot.channels.add(event.getGuild().getTextChannelById(channelId));
                         botChannels.put(event.getGuild(), stuffyBot.channels);
                         try {
                             saveFile(botChannels.get(event.getGuild()), event.getGuild());
@@ -415,6 +415,32 @@ public class CommandsAdded extends ListenerAdapter {
                         event.getChannel().sendMessage("Please set the first music channel by " + prefix + "setchannel").queue();
                     }
                 }
+            }
+        }
+        if(command[0].equalsIgnoreCase(prefix + "removechannel")) {
+            ArrayList<TextChannel> channelArrayList = botChannels.get(event.getGuild());
+            if (Objects.requireNonNull(event.getMember()).hasPermission(Permission.MANAGE_CHANNEL)) {
+                if (botChannels.containsKey(event.getGuild())) {
+                    if (channelArrayList.contains(event.getChannel())) {
+                        if(channelArrayList.contains(event.getGuild().getTextChannelById(command[1]))) {
+                            channelArrayList.remove(event.getGuild().getTextChannelById(command[1]));
+                            if(channelArrayList.isEmpty()) botChannels.remove(event.getGuild());
+                            try {
+                                saveFile(botChannels.get(event.getGuild()), event.getGuild());
+                            } catch (URISyntaxException | IOException e) {
+                                e.printStackTrace();
+                            }
+                            event.getChannel().sendMessage("Successfully removed channel " + Objects.requireNonNull(event.getGuild().getTextChannelById(command[1])).getAsMention() + // 420 lamo
+                                    " from " + stuffyBot.botName + "'s database!").queue();
+                        } else {
+                            event.getChannel().sendMessage("The Channel ID specified doesn't exists on " + stuffyBot.botName + "'s database.").queue();
+                        }
+                    }
+                } else {
+                    event.getChannel().sendMessage("Please set the first music channel by " + prefix + "setchannel").queue();
+                }
+            } else {
+                event.getChannel().sendMessage("You don't have the permission node MANAGE_CHANNELS.").queue();
             }
         }
         super.onGuildMessageReceived(event);

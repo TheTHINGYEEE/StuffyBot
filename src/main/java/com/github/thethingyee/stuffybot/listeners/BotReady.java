@@ -47,6 +47,7 @@ public class BotReady extends ListenerAdapter {
         this.stuffyBot = stuffyBot;
     }
 
+    @SuppressWarnings("ResultOfMethodCallIgnored")
     @Override
     public void onReady(ReadyEvent event) {
         logger.info("Loading settings...");
