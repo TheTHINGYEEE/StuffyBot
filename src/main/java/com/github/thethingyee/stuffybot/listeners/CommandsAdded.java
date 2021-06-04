@@ -238,9 +238,17 @@ public class CommandsAdded extends ListenerAdapter {
                 } else if (command[0].equalsIgnoreCase(prefix + "disconnect")) {
                     if (event.getGuild().getAudioManager().isConnected()) {
                         event.getGuild().getAudioManager().closeAudioConnection();
-                        event.getChannel().sendMessage("Successfully closed Audio Connection.").queue();
+                        this.stuffyBot.getGuildAudioPlayer(event.getGuild()).scheduler.clearQueue(event.getGuild());
+                        event.getChannel().sendMessage("Successfully disconnected out of voice channel.").queue();
                     } else {
-                        event.getChannel().sendMessage("Can't disconnect. Bot is not connected to any voice channels.").queue();
+                        event.getChannel().sendMessage("Can't disconnect. The bot is not connected to any voice channels.").queue();
+                    }
+                } else if(command[0].equalsIgnoreCase(prefix + "clearqueue")) {
+                    if(!this.stuffyBot.getGuildAudioPlayer(event.getGuild()).scheduler.getQueue().isEmpty()) {
+                        this.stuffyBot.getGuildAudioPlayer(event.getGuild()).scheduler.clearQueue(event.getGuild());
+                        event.getChannel().sendMessage("The queue has been cleared.").queue();
+                    } else {
+                        event.getChannel().sendMessage("The queue is already empty!").queue();
                     }
                 } else if (command[0].equalsIgnoreCase(prefix + "playing")) {
                     if (stuffyBot.getGuildAudioPlayer(event.getGuild()).player.getPlayingTrack() != null) {
@@ -286,11 +294,12 @@ public class CommandsAdded extends ListenerAdapter {
                             "9. " + prefix + "bass <percentage> - Sets the bass, either to boost or decrease.\n" +
                             "10. " + prefix + "pos <seconds> - Changes the position of the current track playing in seconds.\n" +
                             "11. " + prefix + "forward <seconds> - Forwards the position of the current track playing in seconds.\n" +
-                            "12. " + prefix + "rewind <seconds> - Rewinds the position of the current track playing in seconds.", true);
+                            "12. " + prefix + "rewind <seconds> - Rewinds the position of the current track playing in seconds.\n" +
+                            "13. " + prefix + "clearqueue - Clears the whole queued songs.\n" +
+                            "14. " + prefix + "disconnect - Makes the bot disconnect to the voice channel it's connected to.", true);
                     builder.setFooter(stuffyBot.getVersion() + " / " + stuffyBot.getBotConfig().getBotAuthor());
                     event.getChannel().sendMessage(builder.build()).queue();
                 } else if(command[0].equalsIgnoreCase(prefix + "player")) {
-
                     if(audioPlayerActive.containsKey(event.getGuild())) {
                         audioPlayerActive.get(event.getGuild()).delete().queue();
                         audioPlayerActive.remove(event.getGuild());
@@ -349,8 +358,8 @@ public class CommandsAdded extends ListenerAdapter {
                     });
                 } else if(command[0].equalsIgnoreCase(prefix + "loop") || command[0].equalsIgnoreCase(prefix + "repeat")) {
                     TrackScheduler scheduler = stuffyBot.getGuildAudioPlayer(event.getGuild()).scheduler;
-                    stuffyBot.getGuildAudioPlayer(event.getGuild()).scheduler.setRepeating(!scheduler.isRepeating());
-                    if(!scheduler.isRepeating()) {
+                    stuffyBot.getGuildAudioPlayer(event.getGuild()).scheduler.setRepeating(scheduler.isRepeating());
+                    if(scheduler.isRepeating()) {
                         event.getChannel().sendMessage("Song now set to NOT repeating.").queue();
                     } else {
                         event.getChannel().sendMessage("Song now set to repeating.").queue();

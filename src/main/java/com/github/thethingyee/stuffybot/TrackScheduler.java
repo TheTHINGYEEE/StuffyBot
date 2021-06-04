@@ -30,7 +30,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
-import java.util.logging.Logger;
 
 import static com.github.thethingyee.stuffybot.StuffyBot.logger;
 
@@ -42,7 +41,6 @@ public class TrackScheduler extends AudioEventAdapter {
     private static final float[] BASS_BOOST = {0.15f, 0.14f, 0.13f, 0.14f, 0.05f, 0.01f, 0.02f, 0.03f, 0.04f, 0.05f, 0.06f, 0.07f, 0.08f, 0.09f, 0.1f};
 
     private boolean repeating = false;
-    private AudioTrack lastTrack = null;
 
     private final AudioPlayer player;
     private final BlockingQueue<AudioTrack> queue;
@@ -90,10 +88,9 @@ public class TrackScheduler extends AudioEventAdapter {
     @Override
     public void onTrackEnd(AudioPlayer player, AudioTrack track, AudioTrackEndReason endReason) {
         // Only start the next track if the end reason is suitable for it (FINISHED or LOAD_FAILED)
-        this.lastTrack = track;
         if (endReason.mayStartNext) {
             if(repeating) {
-                player.startTrack(lastTrack.makeClone(), false);
+                player.startTrack(track.makeClone(), false);
             } else {
                 nextTrack();
             }
@@ -101,7 +98,7 @@ public class TrackScheduler extends AudioEventAdapter {
     }
 
     public boolean isRepeating() {
-        return repeating;
+        return !repeating;
     }
 
     public void setRepeating(boolean repeating) {
@@ -119,7 +116,7 @@ public class TrackScheduler extends AudioEventAdapter {
         builder.setColor(channel.getGuild().getSelfMember().getColor());
         channel.sendMessage(builder.build()).queue();
     }
-    public void clearQueue(Logger logger, Guild guild) {
+    public void clearQueue(Guild guild) {
         List<AudioTrack> tracks = new ArrayList<>(queue);
         for (AudioTrack track : tracks) {
             queue.remove(track);
@@ -160,7 +157,7 @@ public class TrackScheduler extends AudioEventAdapter {
         channel.sendMessage(builder.toString()).queue();
         StringBuilder bands = new StringBuilder();
         for(int i = 0; i < 14; i++) {
-            bands.append(this.equalizer.getGain(i) + ", ");
+            bands.append(this.equalizer.getGain(i)).append(", ");
         }
         channel.sendMessage(bands.toString()).queue();
     }

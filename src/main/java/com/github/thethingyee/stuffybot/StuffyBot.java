@@ -52,6 +52,19 @@ import java.util.logging.Logger;
 
 public class StuffyBot extends ListenerAdapter {
 
+    /*
+    TODO:
+      1. Refactor code.
+      2. Fix a lot of bugs.
+      3. Make the code understandable.
+      4. Add multiple YouTube API Keys.
+      6. Make code more neat.
+      9. Make code more clean.
+      4. Make code crisp.
+      2. Make code precise.
+      0. Make code cool.
+     */
+
     // DECLARATIONS
 
     // Public JDA Object
@@ -72,7 +85,7 @@ public class StuffyBot extends ListenerAdapter {
     public static String author = "";
 
     // Version of the bot.
-    public String version = "v2.6.1";
+    public String version = "v2.7.1";
 
     // Name of the bot without any discriminators.
     public String botName;
@@ -90,7 +103,6 @@ public class StuffyBot extends ListenerAdapter {
         prefix = stuffyBot.botConfig.getBotPrefix();
         token = stuffyBot.botConfig.getBotToken();
         author = stuffyBot.botConfig.getBotAuthor();
-        stuffyBot.version = stuffyBot.botConfig.getBotVersion();
 
         // Deletes the method logger and date logger.
         ConsoleHandler handler = new ConsoleHandler();
@@ -394,7 +406,7 @@ public class StuffyBot extends ListenerAdapter {
             VoiceChannel connectedChannel = Objects.requireNonNull(member.getVoiceState()).getChannel();
             if (connectedChannel == null) {
                 channel.sendMessage("You need to connect to a voice channel first!").queue();
-                this.getGuildAudioPlayer(channel.getGuild()).scheduler.clearQueue(logger, channel.getGuild());
+                this.getGuildAudioPlayer(channel.getGuild()).scheduler.clearQueue(channel.getGuild());
             } else {
                 audioManager.openAudioConnection(connectedChannel);
                 logger.info("Successfully opened Audio Connection. Guild name: " + audioManager.getGuild().getName());
