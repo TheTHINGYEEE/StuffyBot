@@ -34,7 +34,6 @@ public class BotConfig {
     private String botToken;
     private String botPrefix;
     private String botAuthor;
-    private String botVersion;
     private boolean updateMode;
 
     public BotConfig(File configFile) throws IOException {
@@ -56,7 +55,6 @@ public class BotConfig {
             rootObject.put("botConfiguration", botConfiguration);
 
             botConfiguration.put("prefix", ",");
-            botConfiguration.put("version", "VERSION HERE!");
             botConfiguration.put("author", "TheTHINGYEEEEE#6696");
             botConfiguration.put("token", "PUT YOUR BOT TOKEN HERE");
             botConfiguration.put("updatemode", false);
@@ -80,13 +78,11 @@ public class BotConfig {
                 JSONObject configuration = jsonObject.getJSONObject("botConfiguration");
                 if(configuration.has("token") &&
                         configuration.has("prefix") &&
-                        configuration.has("version") &&
                         configuration.has("author") &&
                         configuration.has("youtubeApiKeys") &&
                         configuration.has("updatemode")) {
                     botToken = configuration.getString("token");
                     botPrefix = configuration.getString("prefix");
-                    botVersion = configuration.getString("version");
                     botAuthor = configuration.getString("author");
                     updateMode = configuration.getBoolean("updatemode");
                 }
@@ -108,10 +104,6 @@ public class BotConfig {
 
     public String getBotAuthor() {
         return botAuthor;
-    }
-
-    public String getBotVersion() {
-        return botVersion;
     }
 
     public boolean isUpdateMode() {
