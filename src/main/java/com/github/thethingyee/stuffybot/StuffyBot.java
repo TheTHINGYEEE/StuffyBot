@@ -176,7 +176,7 @@ public class StuffyBot extends ListenerAdapter {
         Scanner scanner = new Scanner(System.in);
         while (true) {
             String scanned = scanner.nextLine();
-            if (scanned.equalsIgnoreCase("stop")) {
+            if (scanned.equalsIgnoreCase("stop") || scanned.equalsIgnoreCase("end")) {
                 logger.info("Ending all process...");
                 jda.shutdown();
                 System.exit(69);
