@@ -41,7 +41,7 @@ First, at your discord window/app, go to your "User Settings" by clicking the ge
 
       ![image](https://user-images.githubusercontent.com/68848247/116548303-9a72d380-a926-11eb-9259-9e98484f2d61.png)
 
-8. On that channel, send a message like this: ,setchannel <copied id / CTRL+V>
+8. On that channel, send a message like this: ",setchannel this", if on another channel, do ",setchannel <copied id | ctrl+v | cmd+v>"
 
       ![image](https://user-images.githubusercontent.com/68848247/116548438-ce4df900-a926-11eb-999d-d94938d85cfd.png)
 
