@@ -57,3 +57,6 @@ First, at your discord window/app, go to your "User Settings" by clicking the ge
 **TheTHINGYEEE/StuffyBot** is licensed under the **GNU General Public License 3.0**
 
 Permissions of this strong copyleft license are conditioned on making available complete source code of licensed works and modifications, which include larger works using a licensed work, under the same license. Copyright and license notices must be preserved. Contributors provide an express grant of patent rights.
+
+# Libraries used:
+<a href="https://github.com/SvenWoltmann/color-thief-java/">SvenWoltmann/color-thief-java</a>
