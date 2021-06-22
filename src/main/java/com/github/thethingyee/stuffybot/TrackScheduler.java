@@ -79,9 +79,11 @@ public class TrackScheduler extends AudioEventAdapter {
         // giving null to startTrack, which is a valid argument and will simply stop the player.
         if(queue.isEmpty()) {
             player.destroy();
-
         } else {
             player.startTrack(queue.poll(), false);
+            for(int i = 0; i < queue.size(); i++) {
+                StuffyBot.guildsPlaying++;
+            }
         }
     }
 
@@ -92,8 +94,11 @@ public class TrackScheduler extends AudioEventAdapter {
             if(repeating) {
                 player.startTrack(track.makeClone(), false);
             } else {
+                StuffyBot.guildsPlaying--;
                 nextTrack();
             }
+        } else {
+            StuffyBot.guildsPlaying--;
         }
     }
 

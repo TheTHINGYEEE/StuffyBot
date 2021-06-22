@@ -48,12 +48,37 @@ public class CommandsAdded extends ListenerAdapter {
     public CommandsAdded(StuffyBot stuffyBot) {
         this.stuffyBot = stuffyBot;
         try {
-            youtubeApiKey = stuffyBot.getBotConfig().getYoutubeKeys().get(0);
+            logger.info("Verifying youtube API key...");
+            youtubeApiKey = stuffyBot.getBotConfig().getYoutubeKeys().get(apiKeyPass(0));
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
-    
+
+    public int apiKeyPass(int startIndex) throws IOException {
+
+        ArrayList<String> youtubeKeys = stuffyBot.getBotConfig().getYoutubeKeys();
+
+        for(int i = startIndex; i < youtubeKeys.size(); i++) {
+            try {
+                logger.info("Checking api key: index of " + i + " out of " + youtubeKeys.size());
+                String apiKey = youtubeKeys.get(i);
+                String url = "https://www.googleapis.com/youtube/v3/search?regionCode=US&type=video&maxResults=1&order=relevance&q=me+at+the+zoo&key=" + apiKey;
+                Document doc = Jsoup.connect(url).timeout(15 * 1000).ignoreContentType(true).get();
+                doc.text();
+                logger.info("API Key: index of " + i + " SUCCESS!");
+                return i;
+            } catch(HttpStatusException | SocketTimeoutException e) {
+                logger.warning("API Key: index of " + i + " FAILED!");
+            }
+        }
+
+        logger.warning("No API keys has passed the request test.");
+        logger.warning("Exiting...");
+        System.exit(403);
+        return 0;
+    }
+
     @Override
     public void onGuildMessageReceived(GuildMessageReceivedEvent event) {
 
@@ -82,7 +107,7 @@ public class CommandsAdded extends ListenerAdapter {
                                 .replace(":", "%3A")
                                 .replace("/", "%2F");
 
-                        String url = "https://www.googleapis.com/youtube/v3/search?regionCode=IN&type=video&maxResults=1&order=relevance&q=" + searchyt + "&key=" + youtubeApiKey;
+                        String url = "https://www.googleapis.com/youtube/v3/search?regionCode=US&type=video&maxResults=1&order=relevance&q=" + searchyt + "&key=" + youtubeApiKey;
 
                         try {
                             Document doc = Jsoup.connect(url).timeout(20 * 1000).ignoreContentType(true).get();

@@ -39,6 +39,8 @@ import net.dv8tion.jda.api.JDABuilder;
 import net.dv8tion.jda.api.entities.*;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
 import net.dv8tion.jda.api.managers.AudioManager;
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 import javax.imageio.ImageIO;
 import java.awt.*;
@@ -50,6 +52,7 @@ import java.util.logging.ConsoleHandler;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+@SpringBootApplication
 public class StuffyBot extends ListenerAdapter {
 
     /*
@@ -63,6 +66,7 @@ public class StuffyBot extends ListenerAdapter {
       4. Make code crisp.
       2. Make code precise.
       0. Make code cool.
+      :)
      */
 
     // DECLARATIONS
@@ -78,19 +82,21 @@ public class StuffyBot extends ListenerAdapter {
     private static int currentStatus = 0;
 
     // To call the bot.
-    public static String prefix = "";
+    public static String prefix = ""; // Prefix set by config
 
-    public static String token = "";
+    public static String token = ""; // Token set by config
 
-    public static String author = "";
+    public static String author = ""; // Author set by config
 
     // Version of the bot.
-    public String version = "v2.7.1";
+    public String version = "v2.7.2"; // Version set by config, probably, idk.
 
     // Name of the bot without any discriminators.
-    public String botName;
+    public String botName; // idk
 
     public BotConfig botConfig;
+
+    public static int guildsPlaying;
 
     public static void main(String[] args) throws Exception {
 
@@ -170,6 +176,10 @@ public class StuffyBot extends ListenerAdapter {
         } else {
             jda.getPresence().setActivity(Activity.competing("programming for updates."));
         }
+
+        // Method to start up spring web.
+        logger.info("Starting up Spring Boot...");
+        SpringApplication.run(StuffyBot.class, args);
 
         // Loads the command line for command line commands.
         logger.info("Loading command line...");
@@ -336,6 +346,7 @@ public class StuffyBot extends ListenerAdapter {
                                 break;
                             }
                         }
+                        guildsPlaying++;
                     } catch (IOException e) {
                         e.printStackTrace();
                     }
