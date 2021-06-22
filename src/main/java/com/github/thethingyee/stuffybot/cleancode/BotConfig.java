@@ -35,6 +35,7 @@ public class BotConfig {
     private String botPrefix;
     private String botAuthor;
     private boolean updateMode;
+    private int apiPort;
 
     public BotConfig(File configFile) throws IOException {
         this.configFile = configFile;
@@ -58,6 +59,7 @@ public class BotConfig {
             botConfiguration.put("author", "TheTHINGYEEEEE#6696");
             botConfiguration.put("token", "PUT YOUR BOT TOKEN HERE");
             botConfiguration.put("updatemode", false);
+            botConfiguration.put("apiport", 3369);
 
             FileWriter writer = new FileWriter(configFile);
             writer.write(JsonWriter.formatJson(rootObject.toString()));
@@ -80,11 +82,13 @@ public class BotConfig {
                         configuration.has("prefix") &&
                         configuration.has("author") &&
                         configuration.has("youtubeApiKeys") &&
-                        configuration.has("updatemode")) {
+                        configuration.has("updatemode") &&
+                        configuration.has("apiport")) {
                     botToken = configuration.getString("token");
                     botPrefix = configuration.getString("prefix");
                     botAuthor = configuration.getString("author");
                     updateMode = configuration.getBoolean("updatemode");
+                    apiPort = configuration.getInt("apiport");
                 }
             } else {
                 throw new IOException("Setup \"config.json\" or delete file and re-run to reset.");
@@ -108,6 +112,10 @@ public class BotConfig {
 
     public boolean isUpdateMode() {
         return updateMode;
+    }
+
+    public int getApiPort() {
+        return apiPort;
     }
 
     public ArrayList<String> getYoutubeKeys() throws IOException {

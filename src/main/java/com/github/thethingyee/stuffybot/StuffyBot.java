@@ -163,6 +163,12 @@ public class StuffyBot extends ListenerAdapter {
         jda.addEventListener(new GuildVoice(stuffyBot));
         jda.addEventListener(new AdditionalCommands(stuffyBot));
 
+        // Method to start up spring web.
+        logger.info("Starting up Spring Boot...");
+        SpringApplication app = new SpringApplication(StuffyBot.class);
+        app.setDefaultProperties(Collections.
+                singletonMap("server.port", stuffyBot.botConfig.getApiPort()));
+        app.run(args);
 
         // Loads additional features to the bot that aren't that necessary.
         logger.info("Loading additional features...");
@@ -176,10 +182,6 @@ public class StuffyBot extends ListenerAdapter {
         } else {
             jda.getPresence().setActivity(Activity.competing("programming for updates."));
         }
-
-        // Method to start up spring web.
-        logger.info("Starting up Spring Boot...");
-        SpringApplication.run(StuffyBot.class, args);
 
         // Loads the command line for command line commands.
         logger.info("Loading command line...");
