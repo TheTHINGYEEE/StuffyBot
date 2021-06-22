@@ -41,7 +41,7 @@ First, at your discord window/app, go to your "User Settings" by clicking the ge
 
       ![image](https://user-images.githubusercontent.com/68848247/116548303-9a72d380-a926-11eb-9259-9e98484f2d61.png)
 
-8. On that channel, send a message like this: ,setchannel <copied id / CTRL+V>
+8. On that channel, send a message like this: ",setchannel this", if on another channel, do ",setchannel <copied id | ctrl+v | cmd+v>"
 
       ![image](https://user-images.githubusercontent.com/68848247/116548438-ce4df900-a926-11eb-999d-d94938d85cfd.png)
 
@@ -57,3 +57,6 @@ First, at your discord window/app, go to your "User Settings" by clicking the ge
 **TheTHINGYEEE/StuffyBot** is licensed under the **GNU General Public License 3.0**
 
 Permissions of this strong copyleft license are conditioned on making available complete source code of licensed works and modifications, which include larger works using a licensed work, under the same license. Copyright and license notices must be preserved. Contributors provide an express grant of patent rights.
+
+# Libraries used:
+<a href="https://github.com/SvenWoltmann/color-thief-java/">SvenWoltmann/color-thief-java</a>
