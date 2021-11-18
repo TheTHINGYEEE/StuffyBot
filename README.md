@@ -1,7 +1,9 @@
 # StuffyBot
 <img src="https://img.shields.io/github/issues/TheTHINGYEEE/StuffyBot"><img src="https://img.shields.io/github/license/TheTHINGYEEE/StuffyBot"><img src="https://github.com/TheTHINGYEEE/StuffyBot/actions/workflows/.github/workflows/maven.yml/badge.svg">
 
-A music discord bot made entirely from Java using the JDA library.
+A music discord bot made entirely from Java using the JDA library
+
+<h1>MAJOR UPDATES ON <a href="https://github.com/TheTHINGYEEE/StuffyTwo">StuffyTwo</a></h1>
 
 # Features
 - Set bass boost level
